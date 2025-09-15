@@ -1,0 +1,101 @@
+// 정부지원사업 매칭 에이전트 DB 스키마
+// Prisma schema file for Government Support Program Matching Agent
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NEON_DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(USER)
+  company   Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+  createdAt DateTime @default(now())
+  
+  @@map("users")
+}
+
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  bizRegNo  String?   @unique
+  size      String?
+  industry  String?
+  region    String?
+  foundedAt DateTime?
+  employees Int?
+  users     User[]
+  
+  @@map("companies")
+}
+
+model Provider {
+  id       String           @id @default(cuid())
+  name     String
+  type     String
+  contact  String?
+  website  String?
+  address  String?
+  programs SupportProgram[]
+  vouchers Voucher[]
+  
+  @@map("providers")
+}
+
+model SupportProgram {
+  id             String    @id @default(cuid())
+  title          String
+  providerId     String
+  category       String?
+  target         String?
+  amountMin      Int?
+  amountMax      Int?
+  supportRate    Float?
+  region         String?
+  deadline       DateTime?
+  applicationUrl String?
+  attachmentUrl  String?
+  tags           String[]
+  description    String?
+  provider       Provider  @relation(fields: [providerId], references: [id])
+  
+  @@map("support_programs")
+}
+
+model Voucher {
+  id          String   @id @default(cuid())
+  name        String
+  category    String?
+  budget      Int?
+  supportRate Float?
+  difficulty  String?
+  providerId  String
+  period      String?
+  provider    Provider @relation(fields: [providerId], references: [id])
+  
+  @@map("vouchers")
+}
+
+model Matching {
+  id        String   @id @default(cuid())
+  userId    String
+  itemType  String   // 'program' | 'voucher'
+  itemId    String
+  fitScore  Float
+  reasons   String[]
+  createdAt DateTime @default(now())
+  
+  @@map("matchings")
+}

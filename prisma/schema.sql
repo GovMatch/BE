@@ -1,0 +1,19 @@
+-- 테이블 생성 예시 (Prisma schema.prisma로 대체 권장)
+-- CREATE TABLE IF NOT EXISTS users (
+--     id SERIAL PRIMARY KEY,
+--     email VARCHAR(255) UNIQUE NOT NULL,
+--     name VARCHAR(255) NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- CREATE TABLE IF NOT EXISTS support_programs (
+--     id SERIAL PRIMARY KEY,
+--     title VARCHAR(255) NOT NULL,
+--     description TEXT,
+--     organization VARCHAR(255),
+--     application_period VARCHAR(255),
+--     support_amount BIGINT,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
