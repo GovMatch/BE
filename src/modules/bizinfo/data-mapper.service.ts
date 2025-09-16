@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BizinfoProgramData } from './bizinfo-api.service';
+import { SupportProgramCategory } from '../../shared/enums/support-program-category.enum';
 
 export interface MappedProgramData {
   externalId: string;
@@ -27,7 +28,7 @@ export class DataMapperService {
       return {
         externalId: data.pblancId,
         title: this.cleanText(data.pblancNm),
-        category: data.pldirSportRealmLclasCodeNm || '기타',
+        category: this.mapToSupportProgramCategoryCode(data.pldirSportRealmLclasCodeNm),
         target: data.trgetNm || '전체',
         description: this.cleanHtmlContent(data.bsnsSumryCn),
         deadline: this.parseDeadline(data.reqstBeginEndDe),
@@ -180,6 +181,57 @@ export class DataMapperService {
     }
     
     return '기타';
+  }
+
+  private mapToSupportProgramCategoryCode(categoryName: string | null | undefined): string {
+    if (!categoryName) return SupportProgramCategory.OTHER;
+
+    const category = categoryName.toLowerCase().trim();
+
+    // 금융 관련 키워드
+    if (category.includes('금융') || category.includes('자금') || category.includes('투자') ||
+        category.includes('융자') || category.includes('대출') || category.includes('보증')) {
+      return SupportProgramCategory.FINANCE;
+    }
+
+    // 기술 관련 키워드
+    if (category.includes('기술') || category.includes('연구') || category.includes('개발') ||
+        category.includes('r&d') || category.includes('특허') || category.includes('혁신')) {
+      return SupportProgramCategory.TECH;
+    }
+
+    // 인력 관련 키워드
+    if (category.includes('인력') || category.includes('교육') || category.includes('훈련') ||
+        category.includes('채용') || category.includes('고용') || category.includes('인재')) {
+      return SupportProgramCategory.HR;
+    }
+
+    // 수출 관련 키워드
+    if (category.includes('수출') || category.includes('해외') || category.includes('글로벌') ||
+        category.includes('국제') || category.includes('무역')) {
+      return SupportProgramCategory.EXPORT;
+    }
+
+    // 내수 관련 키워드
+    if (category.includes('내수') || category.includes('국내') || category.includes('마케팅') ||
+        category.includes('판매') || category.includes('홍보')) {
+      return SupportProgramCategory.DOMESTIC;
+    }
+
+    // 창업 관련 키워드
+    if (category.includes('창업') || category.includes('스타트업') || category.includes('예비창업') ||
+        category.includes('청년창업')) {
+      return SupportProgramCategory.STARTUP;
+    }
+
+    // 경영 관련 키워드
+    if (category.includes('경영') || category.includes('컨설팅') || category.includes('진단') ||
+        category.includes('개선') || category.includes('운영')) {
+      return SupportProgramCategory.MANAGEMENT;
+    }
+
+    // 기본값: 기타
+    return SupportProgramCategory.OTHER;
   }
 
   mapMultipleProgramsData(dataList: BizinfoProgramData[]): MappedProgramData[] {

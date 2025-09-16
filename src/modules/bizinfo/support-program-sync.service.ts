@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma.service';
 import { BizinfoApiService } from './bizinfo-api.service';
 import { DataMapperService, MappedProgramData } from './data-mapper.service';
+import { SupportProgramCategory } from '../../shared/enums/support-program-category.enum';
 
 export interface SyncResult {
   success: boolean;

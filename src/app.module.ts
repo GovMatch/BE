@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './config/prisma.module';
 import { BizinfoModule } from './modules/bizinfo/bizinfo.module';
+import { ProgramModule } from './modules/programs/program.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -12,6 +13,7 @@ import { AppService } from './app.service';
     }),
     PrismaModule,
     BizinfoModule,
+    ProgramModule,
   ],
   controllers: [AppController],
   providers: [AppService],
