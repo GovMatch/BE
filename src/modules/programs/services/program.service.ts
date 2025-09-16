@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../config/prisma.service';
-import { ProgramQueryDto, ProgramResponseDto, ProgramListResponseDto, CategoryResponseDto } from './dto';
-import { SupportProgramCategory, SUPPORT_PROGRAM_CATEGORY_LABELS } from '../../shared/enums/support-program-category.enum';
+import { PrismaService } from '../../../config/prisma.service';
+import { ProgramQueryDto, ProgramResponseDto, ProgramListResponseDto, CategoryResponseDto } from '../dto';
+import { SupportProgramCategory, SUPPORT_PROGRAM_CATEGORY_LABELS } from '../../../shared/enums/support-program-category.enum';
 import { Prisma } from '@prisma/client';
 
 /**
@@ -39,40 +39,46 @@ export class ProgramService {
 
     const skip = (page - 1) * limit;
 
-    // 기본 where 조건 구성
-    const where: Prisma.SupportProgramWhereInput = {};
+    // 기본 where 조건 구성 - AND 배열로 모든 조건 관리
+    const andConditions: Prisma.SupportProgramWhereInput[] = [];
 
-    // 활성 사업만 조회 (마감일이 지나지 않은 것)
+    // 활성 사업만 조회 (마감일이 지나지 않은 것 또는 마감일이 없는 것)
     if (activeOnly) {
-      where.deadline = {
-        gte: new Date()
-      };
+      andConditions.push({
+        OR: [
+          { deadline: { gte: new Date() } },  // 마감일이 현재 이후
+          { deadline: null }                  // 마감일이 없는 경우
+        ]
+      });
     }
 
     // 카테고리 필터
     if (category) {
-      where.category = category; // Enum 값을 String으로 저장된 DB와 비교
+      andConditions.push({ category });
     }
 
     // 검색어 필터 (제목 또는 설명에서 검색)
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
-      ];
+      andConditions.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
+        ]
+      });
     }
 
     // 지역 필터
     if (region) {
-      where.region = { contains: region, mode: 'insensitive' };
+      andConditions.push({ region: { contains: region, mode: 'insensitive' } });
     }
 
     // 태그 필터
     if (tags && tags.length > 0) {
-      where.tags = {
-        hasSome: tags
-      };
+      andConditions.push({ tags: { hasSome: tags } });
     }
+
+    // 최종 where 조건 구성
+    const where: Prisma.SupportProgramWhereInput = andConditions.length > 0 ? { AND: andConditions } : {};
 
     // 정렬 조건
     const orderBy: Prisma.SupportProgramOrderByWithRelationInput = {};

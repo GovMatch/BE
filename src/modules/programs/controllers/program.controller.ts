@@ -12,14 +12,14 @@ import {
   ApiParam,
   ApiQuery,
 } from "@nestjs/swagger";
-import { ProgramService } from "./program.service";
+import { ProgramService } from "../services/program.service";
 import {
   ProgramQueryDto,
   ProgramResponseDto,
   ProgramListResponseDto,
   CategoryResponseDto,
-} from "./dto";
-import { SupportProgramCategory } from "../../shared/enums/support-program-category.enum";
+} from "../dto";
+import { SupportProgramCategory } from "../../../shared/enums/support-program-category.enum";
 
 /**
  * 지원사업 관련 REST API 컨트롤러
@@ -31,7 +31,7 @@ import { SupportProgramCategory } from "../../shared/enums/support-program-categ
  * - 지원사업 검색 기능
  */
 @ApiTags("Programs")
-@Controller("api/programs")
+@Controller("programs")
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
 

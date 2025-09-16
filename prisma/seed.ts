@@ -95,7 +95,7 @@ async function main() {
       data: {
         title: '청년창업지원사업',
         providerId: providers[0].id,
-        category: '창업지원',
+        category: '06',
         target: '청년창업자',
         amountMin: 10000000,
         amountMax: 50000000,
@@ -111,7 +111,7 @@ async function main() {
       data: {
         title: '중소기업 R&D 지원',
         providerId: providers[1].id,
-        category: '기술개발',
+        category: '02',
         target: '중소기업',
         amountMin: 50000000,
         amountMax: 200000000,
@@ -127,7 +127,7 @@ async function main() {
       data: {
         title: '농업인 소득증대 지원',
         providerId: providers[2].id,
-        category: '소득지원',
+        category: '09',
         target: '농업인',
         amountMin: 5000000,
         amountMax: 30000000,

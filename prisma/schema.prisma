@@ -15,16 +15,6 @@ enum Role {
   ADMIN
 }
 
-enum SupportProgramCategory {
-  FINANCE     // 01 금융
-  TECH        // 02 기술
-  HR          // 03 인력
-  EXPORT      // 04 수출
-  DOMESTIC    // 05 내수
-  STARTUP     // 06 창업
-  MANAGEMENT  // 07 경영
-  OTHER       // 09 기타
-}
 
 model User {
   id        String   @id @default(cuid())
