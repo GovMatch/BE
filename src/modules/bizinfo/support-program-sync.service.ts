@@ -10,10 +10,12 @@ export interface SyncResult {
   totalProcessed: number;
   created: number;
   updated: number;
+  deleted: number;
   errors: number;
   startTime: Date;
   endTime: Date;
   errorDetails: string[];
+  deletedPrograms?: string[];
 }
 
 @Injectable()
@@ -36,10 +38,12 @@ export class SupportProgramSyncService {
       totalProcessed: 0,
       created: 0,
       updated: 0,
+      deleted: 0,
       errors: 0,
       startTime,
       endTime: new Date(),
       errorDetails: [],
+      deletedPrograms: [],
     };
 
     try {
@@ -61,8 +65,13 @@ export class SupportProgramSyncService {
       // 3. 데이터베이스에 저장
       for (const programData of mappedData) {
         try {
-          await this.upsertSupportProgram(programData);
+          const upsertResult = await this.upsertSupportProgram(programData);
           result.totalProcessed++;
+          if (upsertResult.action === 'created') {
+            result.created++;
+          } else {
+            result.updated++;
+          }
         } catch (error) {
           result.errors++;
           result.errorDetails.push(`Program ${programData.externalId}: ${error.message}`);
@@ -70,12 +79,24 @@ export class SupportProgramSyncService {
         }
       }
 
+      // 4. 만료된 프로그램 정리
+      try {
+        const cleanupResult = await this.cleanupExpiredPrograms();
+        result.deleted = cleanupResult.deletedCount;
+        result.deletedPrograms = cleanupResult.deletedPrograms;
+        this.logger.log(`Cleaned up ${cleanupResult.deletedCount} expired programs`);
+      } catch (cleanupError) {
+        result.errors++;
+        result.errorDetails.push(`Cleanup error: ${cleanupError.message}`);
+        this.logger.error('Error during cleanup:', cleanupError.message);
+      }
+
       // 결과 로깅
       result.success = result.errors === 0;
       result.endTime = new Date();
-      
-      this.logger.log(`Sync completed. Processed: ${result.totalProcessed}, Errors: ${result.errors}`);
-      
+
+      this.logger.log(`Sync completed. Processed: ${result.totalProcessed}, Deleted: ${result.deleted}, Errors: ${result.errors}`);
+
       return result;
 
     } catch (error) {
@@ -87,7 +108,7 @@ export class SupportProgramSyncService {
     }
   }
 
-  private async upsertSupportProgram(programData: MappedProgramData): Promise<void> {
+  private async upsertSupportProgram(programData: MappedProgramData): Promise<{ action: 'created' | 'updated' }> {
     try {
       // 1. Provider 찾기 또는 생성
       const provider = await this.findOrCreateProvider(programData.provider);
@@ -118,8 +139,9 @@ export class SupportProgramSyncService {
             providerId: provider.id,
           },
         });
-        
+
         this.logger.debug(`Updated program: ${programData.title}`);
+        return { action: 'updated' };
         
       } else {
         // 4. 새 프로그램 생성
@@ -136,8 +158,9 @@ export class SupportProgramSyncService {
             providerId: provider.id,
           },
         });
-        
+
         this.logger.debug(`Created new program: ${programData.title}`);
+        return { action: 'created' };
       }
       
     } catch (error) {
@@ -197,10 +220,12 @@ export class SupportProgramSyncService {
       totalProcessed: 0,
       created: 0,
       updated: 0,
+      deleted: 0,
       errors: 0,
       startTime,
       endTime: new Date(),
       errorDetails: [],
+      deletedPrograms: [],
     };
 
     try {
@@ -211,8 +236,13 @@ export class SupportProgramSyncService {
       
       for (const programData of mappedData) {
         try {
-          await this.upsertSupportProgram(programData);
+          const upsertResult = await this.upsertSupportProgram(programData);
           result.totalProcessed++;
+          if (upsertResult.action === 'created') {
+            result.created++;
+          } else {
+            result.updated++;
+          }
         } catch (error) {
           result.errors++;
           result.errorDetails.push(`Program ${programData.externalId}: ${error.message}`);
@@ -228,6 +258,62 @@ export class SupportProgramSyncService {
       result.errors++;
       result.errorDetails.push(`Category sync error: ${error.message}`);
       result.endTime = new Date();
+      throw error;
+    }
+  }
+
+  async cleanupExpiredPrograms(): Promise<{
+    deletedCount: number;
+    deletedPrograms: string[];
+  }> {
+    const now = new Date();
+    this.logger.log('만료된 지원사업 정리 시작');
+
+    try {
+      // 1. 만료된 프로그램 조회
+      const expiredPrograms = await this.prisma.supportProgram.findMany({
+        where: {
+          deadline: {
+            lt: now
+          }
+        },
+        select: {
+          id: true,
+          title: true,
+          deadline: true
+        }
+      });
+
+      this.logger.log(`만료된 프로그램 ${expiredPrograms.length}개 발견`);
+
+      if (expiredPrograms.length === 0) {
+        return {
+          deletedCount: 0,
+          deletedPrograms: []
+        };
+      }
+
+      // 2. 만료된 프로그램 삭제
+      const deletedPrograms = expiredPrograms.map(p => p.title);
+      const expiredIds = expiredPrograms.map(p => p.id);
+
+      await this.prisma.supportProgram.deleteMany({
+        where: {
+          id: {
+            in: expiredIds
+          }
+        }
+      });
+
+      this.logger.log(`만료된 프로그램 ${expiredPrograms.length}개 삭제 완료`);
+
+      return {
+        deletedCount: expiredPrograms.length,
+        deletedPrograms
+      };
+
+    } catch (error) {
+      this.logger.error('만료된 프로그램 정리 실패:', error.message);
       throw error;
     }
   }
@@ -249,7 +335,7 @@ export class SupportProgramSyncService {
         totalPrograms,
         totalProviders,
       };
-      
+
     } catch (error) {
       this.logger.error('Error getting sync status:', error.message);
       throw error;

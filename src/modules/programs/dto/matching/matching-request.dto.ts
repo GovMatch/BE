@@ -151,31 +151,100 @@ export class SupportPreferencesDto {
   voucherInterest?: string[];
 }
 
-// 메인 요청 DTO
+// 메인 요청 DTO (FE 요구사항에 맞춘 플랫 구조)
 export class MatchingRequestDto {
   @ApiProperty({
-    description: '기업 기본 정보',
-    type: CompanyInfoDto
+    description: '기업명',
+    example: '테크스타트',
+    maxLength: 100
   })
-  @ValidateNested()
-  @Type(() => CompanyInfoDto)
-  companyInfo: CompanyInfoDto;
+  @IsString()
+  @IsNotEmpty({ message: '기업명은 필수입니다' })
+  @MaxLength(100, { message: '기업명은 100자 이하여야 합니다' })
+  companyName: string;
 
   @ApiProperty({
-    description: '기업 규모 정보',
-    type: CompanyScaleDto
+    description: '사업자 유형',
+    enum: BusinessType,
+    example: BusinessType.STARTUP
   })
-  @ValidateNested()
-  @Type(() => CompanyScaleDto)
-  companyScale: CompanyScaleDto;
+  @IsEnum(BusinessType, { message: '올바른 사업자 유형을 선택해주세요' })
+  businessType: BusinessType;
 
   @ApiProperty({
-    description: '지원 희망 분야',
-    type: SupportPreferencesDto
+    description: '사업 목적/하고자 하는 일',
+    example: 'AI 기반 헬스케어 솔루션 개발',
+    maxLength: 1000
   })
-  @ValidateNested()
-  @Type(() => SupportPreferencesDto)
-  supportPreferences: SupportPreferencesDto;
+  @IsString()
+  @IsNotEmpty({ message: '사업 목적은 필수입니다' })
+  @MaxLength(1000, { message: '사업목적은 1000자 이하여야 합니다' })
+  businessPurpose: string;
+
+  @ApiProperty({
+    description: '설립연도',
+    example: '2022',
+    type: String
+  })
+  @IsString()
+  @IsNotEmpty({ message: '설립연도는 필수입니다' })
+  establishedYear: string;
+
+  @ApiProperty({
+    description: '직원 수 범위',
+    enum: EmployeeRange,
+    example: EmployeeRange.SMALL
+  })
+  @IsEnum(EmployeeRange, { message: '올바른 직원 수 범위를 선택해주세요' })
+  employees: EmployeeRange;
+
+  @ApiProperty({
+    description: '연매출 범위',
+    enum: RevenueRange,
+    example: RevenueRange.UNDER_1B
+  })
+  @IsEnum(RevenueRange, { message: '올바른 연매출 범위를 선택해주세요' })
+  annualRevenue: RevenueRange;
+
+  @ApiProperty({
+    description: '소재지',
+    example: 'seoul',
+    enum: ['seoul', 'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan', 'gyeonggi', 'gangwon', 'other']
+  })
+  @IsIn(['seoul', 'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan', 'gyeonggi', 'gangwon', 'other'],
+       { message: '올바른 지역을 선택해주세요' })
+  region: string;
+
+  @ApiProperty({
+    description: '관심 지원 분야 목록',
+    example: ['02', '06', '07'],
+    type: [String],
+    maxItems: 10
+  })
+  @IsArray({ message: '지원분야는 배열이어야 합니다' })
+  @ArrayNotEmpty({ message: '관심 지원분야를 하나 이상 선택해주세요' })
+  @ArrayMaxSize(10, { message: '최대 10개까지 선택 가능합니다' })
+  @IsString({ each: true, message: '지원분야는 문자열이어야 합니다' })
+  targetPrograms: string[];
+
+  @ApiProperty({
+    description: '지원 시급성',
+    enum: Urgency,
+    example: Urgency.SHORT
+  })
+  @IsEnum(Urgency, { message: '올바른 시급성을 선택해주세요' })
+  urgency: Urgency;
+
+  @ApiProperty({
+    description: '관심 바우처 분야',
+    example: ['voucher1', 'voucher3'],
+    type: [String],
+    maxItems: 5
+  })
+  @IsArray({ message: '바우처 관심분야는 배열이어야 합니다' })
+  @ArrayMaxSize(5, { message: '바우처 관심분야는 최대 5개까지 선택 가능합니다' })
+  @IsString({ each: true, message: '바우처 분야는 문자열이어야 합니다' })
+  voucherInterest: string[];
 }
 
 // 단계별 요청 DTO (3단계 플로우용)

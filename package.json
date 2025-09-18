@@ -38,6 +38,7 @@
     "axios": "^1.12.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "openai": "^5.20.3",
     "prisma": "^6.16.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

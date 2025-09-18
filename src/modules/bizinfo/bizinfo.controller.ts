@@ -112,12 +112,39 @@ export class BizinfoController {
     }
   }
 
+  @Post('cleanup/expired')
+  async cleanupExpiredPrograms() {
+    try {
+      const result = await this.supportProgramSyncService.cleanupExpiredPrograms();
+
+      return {
+        success: true,
+        message: '만료된 지원사업 정리가 완료되었습니다.',
+        data: {
+          deletedCount: result.deletedCount,
+          deletedPrograms: result.deletedPrograms,
+          timestamp: new Date().toISOString()
+        },
+      };
+
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: '만료된 지원사업 정리 중 오류가 발생했습니다.',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Get('test')
   async testApiConnection() {
     try {
       // API 연결 테스트 (소량 데이터만 가져와서 확인)
       const result = await this.supportProgramSyncService.syncProgramsByCategory('02');
-      
+
       return {
         success: true,
         message: 'API 연결 테스트가 성공했습니다.',
@@ -128,7 +155,7 @@ export class BizinfoController {
           sampleData: result.totalProcessed > 0 ? '데이터 처리 성공' : '데이터 없음',
         },
       };
-      
+
     } catch (error) {
       throw new HttpException(
         {

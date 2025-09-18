@@ -1,8 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../config/prisma.service';
-import { ProgramQueryDto, ProgramResponseDto, ProgramListResponseDto, CategoryResponseDto } from '../dto';
-import { SupportProgramCategory, SUPPORT_PROGRAM_CATEGORY_LABELS } from '../../../shared/enums/support-program-category.enum';
-import { Prisma } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../../config/prisma.service";
+import {
+  ProgramQueryDto,
+  ProgramResponseDto,
+  ProgramListResponseDto,
+  CategoryResponseDto,
+} from "../dto";
+import {
+  SupportProgramCategory,
+  SUPPORT_PROGRAM_CATEGORY_LABELS,
+} from "../../../shared/enums/support-program-category.enum";
+import { Prisma } from "@prisma/client";
 
 /**
  * 지원사업 관련 비즈니스 로직을 처리하는 서비스
@@ -35,7 +43,17 @@ export class ProgramService {
    * @returns 지원사업 목록과 페이지네이션 메타데이터
    */
   async findPrograms(query: ProgramQueryDto): Promise<ProgramListResponseDto> {
-    const { page = 1, limit = 20, category, search, region, sortBy = 'deadline', sortOrder = 'asc', tags, activeOnly = true } = query;
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      search,
+      region,
+      sortBy = "deadline",
+      sortOrder = "asc",
+      tags,
+      activeOnly = true,
+    } = query;
 
     const skip = (page - 1) * limit;
 
@@ -46,9 +64,9 @@ export class ProgramService {
     if (activeOnly) {
       andConditions.push({
         OR: [
-          { deadline: { gte: new Date() } },  // 마감일이 현재 이후
-          { deadline: null }                  // 마감일이 없는 경우
-        ]
+          { deadline: { gte: new Date() } }, // 마감일이 현재 이후
+          { deadline: null }, // 마감일이 없는 경우
+        ],
       });
     }
 
@@ -61,15 +79,15 @@ export class ProgramService {
     if (search) {
       andConditions.push({
         OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } }
-        ]
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
       });
     }
 
     // 지역 필터
     if (region) {
-      andConditions.push({ region: { contains: region, mode: 'insensitive' } });
+      andConditions.push({ region: { contains: region, mode: "insensitive" } });
     }
 
     // 태그 필터
@@ -78,15 +96,16 @@ export class ProgramService {
     }
 
     // 최종 where 조건 구성
-    const where: Prisma.SupportProgramWhereInput = andConditions.length > 0 ? { AND: andConditions } : {};
+    const where: Prisma.SupportProgramWhereInput =
+      andConditions.length > 0 ? { AND: andConditions } : {};
 
     // 정렬 조건
     const orderBy: Prisma.SupportProgramOrderByWithRelationInput = {};
-    if (sortBy === 'deadline') {
+    if (sortBy === "deadline") {
       orderBy.deadline = sortOrder;
-    } else if (sortBy === 'createdAt') {
+    } else if (sortBy === "createdAt") {
       orderBy.id = sortOrder; // createdAt 대신 id로 정렬 (cuid는 시간순)
-    } else if (sortBy === 'title') {
+    } else if (sortBy === "title") {
       orderBy.title = sortOrder;
     }
 
@@ -98,27 +117,32 @@ export class ProgramService {
       const programs = await this.prisma.supportProgram.findMany({
         where,
         include: {
-          provider: true
+          provider: true,
         },
         orderBy,
         skip,
-        take: limit
+        take: limit,
       });
 
       // DTO 변환
-      const programDtos: ProgramResponseDto[] = programs.map(program => ({
+      const programDtos: ProgramResponseDto[] = programs.map((program) => ({
         id: program.id,
         title: program.title,
-        description: program.description || '',
+        description: program.description || "",
         category: this.mapStringToEnum(program.category),
-        categoryLabel: SUPPORT_PROGRAM_CATEGORY_LABELS[this.mapStringToEnum(program.category)],
-        target: program.target || '전체',
+        categoryLabel:
+          SUPPORT_PROGRAM_CATEGORY_LABELS[
+            this.mapStringToEnum(program.category)
+          ],
+        target: program.target || "전체",
         amountMin: program.amountMin,
         amountMax: program.amountMax,
         supportRate: program.supportRate,
         region: program.region,
         deadline: program.deadline,
-        daysLeft: program.deadline ? this.calculateDaysLeft(program.deadline) : undefined,
+        daysLeft: program.deadline
+          ? this.calculateDaysLeft(program.deadline)
+          : undefined,
         applicationUrl: program.applicationUrl,
         attachmentUrl: program.attachmentUrl,
         tags: program.tags,
@@ -127,9 +151,9 @@ export class ProgramService {
           name: program.provider.name,
           type: program.provider.type,
           contact: program.provider.contact,
-          website: program.provider.website
+          website: program.provider.website,
         },
-        createdAt: new Date() // Prisma schema에 createdAt이 없으므로 임시값
+        createdAt: new Date(), // Prisma schema에 createdAt이 없으므로 임시값
       }));
 
       const totalPages = Math.ceil(total / limit);
@@ -141,11 +165,10 @@ export class ProgramService {
         limit,
         totalPages,
         hasNext: page < totalPages,
-        hasPrev: page > 1
+        hasPrev: page > 1,
       };
-
     } catch (error) {
-      this.logger.error('Error finding programs:', error);
+      this.logger.error("Error finding programs:", error);
       throw error;
     }
   }
@@ -165,8 +188,8 @@ export class ProgramService {
       const program = await this.prisma.supportProgram.findUnique({
         where: { id },
         include: {
-          provider: true
-        }
+          provider: true,
+        },
       });
 
       if (!program) {
@@ -176,16 +199,21 @@ export class ProgramService {
       return {
         id: program.id,
         title: program.title,
-        description: program.description || '',
+        description: program.description || "",
         category: this.mapStringToEnum(program.category),
-        categoryLabel: SUPPORT_PROGRAM_CATEGORY_LABELS[this.mapStringToEnum(program.category)],
-        target: program.target || '전체',
+        categoryLabel:
+          SUPPORT_PROGRAM_CATEGORY_LABELS[
+            this.mapStringToEnum(program.category)
+          ],
+        target: program.target || "전체",
         amountMin: program.amountMin,
         amountMax: program.amountMax,
         supportRate: program.supportRate,
         region: program.region,
         deadline: program.deadline,
-        daysLeft: program.deadline ? this.calculateDaysLeft(program.deadline) : undefined,
+        daysLeft: program.deadline
+          ? this.calculateDaysLeft(program.deadline)
+          : undefined,
         applicationUrl: program.applicationUrl,
         attachmentUrl: program.attachmentUrl,
         tags: program.tags,
@@ -194,11 +222,10 @@ export class ProgramService {
           name: program.provider.name,
           type: program.provider.type,
           contact: program.provider.contact,
-          website: program.provider.website
+          website: program.provider.website,
         },
-        createdAt: new Date() // Prisma schema에 createdAt이 없으므로 임시값
+        createdAt: new Date(), // Prisma schema에 createdAt이 없으므로 임시값
       };
-
     } catch (error) {
       this.logger.error(`Error finding program by id ${id}:`, error);
       throw error;
@@ -222,30 +249,32 @@ export class ProgramService {
     try {
       // 각 카테고리별 활성 지원사업 개수 조회
       const categoryCounts = await this.prisma.supportProgram.groupBy({
-        by: ['category'],
+        by: ["category"],
         _count: {
-          id: true
+          id: true,
         },
         where: {
           deadline: {
-            gte: new Date() // 활성 사업만
-          }
-        }
+            gte: new Date(), // 활성 사업만
+          },
+        },
       });
 
-      const categories: CategoryResponseDto[] = Object.values(SupportProgramCategory).map(category => {
-        const count = categoryCounts.find(c => c.category === category)?._count.id || 0;
+      const categories: CategoryResponseDto[] = Object.values(
+        SupportProgramCategory
+      ).map((category) => {
+        const count =
+          categoryCounts.find((c) => c.category === category)?._count.id || 0;
         return {
           code: category,
           label: SUPPORT_PROGRAM_CATEGORY_LABELS[category],
-          count
+          count,
         };
       });
 
       return categories.sort((a, b) => b.count - a.count); // 개수 순으로 정렬
-
     } catch (error) {
-      this.logger.error('Error getting categories:', error);
+      this.logger.error("Error getting categories:", error);
       throw error;
     }
   }
@@ -275,12 +304,16 @@ export class ProgramService {
    * @param categoryString - DB에 저장된 카테고리 문자열
    * @returns 해당하는 SupportProgramCategory Enum 값
    */
-  private mapStringToEnum(categoryString: string | null): SupportProgramCategory {
+  private mapStringToEnum(
+    categoryString: string | null
+  ): SupportProgramCategory {
     if (!categoryString) return SupportProgramCategory.OTHER;
 
     // Enum 값과 일치하는지 확인
     const enumValues = Object.values(SupportProgramCategory);
-    const matchedEnum = enumValues.find(enumValue => enumValue === categoryString);
+    const matchedEnum = enumValues.find(
+      (enumValue) => enumValue === categoryString
+    );
 
     return matchedEnum || SupportProgramCategory.OTHER;
   }
