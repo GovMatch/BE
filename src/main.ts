@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ProgramSchedulerService } from './modules/programs/services/program-scheduler.service';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +12,14 @@ async function bootstrap() {
 
   // Global prefix 설정
   app.setGlobalPrefix('api');
+
+  // Validation Pipe 설정 (쿼리 파라미터 타입 변환 지원)
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+  }));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
