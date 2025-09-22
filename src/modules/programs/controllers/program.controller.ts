@@ -164,6 +164,28 @@ export class ProgramController {
   }
 
   /**
+   * 마감기한이 7일 이내인 지원사업 목록 조회
+   *
+   * 현재 날짜로부터 7일 이내에 마감되는 지원사업들만 필터링하여 반환합니다.
+   * 기본적으로 마감일 순으로 오름차순 정렬됩니다.
+   *
+   * @returns 마감임박 지원사업 목록
+   */
+  @Get("urgent")
+  @ApiOperation({
+    summary: "마감임박 지원사업 조회",
+    description: "마감기한이 7일 이내인 지원사업 목록을 조회합니다",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "마감임박 지원사업 목록 조회 성공",
+    type: ProgramListResponseDto,
+  })
+  async getUrgentPrograms(): Promise<ProgramListResponseDto> {
+    return this.programService.findUrgentPrograms();
+  }
+
+  /**
    * 특정 지원사업의 상세 정보를 조회하는 메서드
    *
    * 지원사업 ID를 받아서 해당 지원사업의 모든 상세 정보를 반환합니다.

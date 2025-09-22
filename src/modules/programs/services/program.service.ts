@@ -233,6 +233,88 @@ export class ProgramService {
   }
 
   /**
+   * 마감기한이 7일 이내인 지원사업 목록을 조회하는 메서드
+   *
+   * 현재 날짜로부터 7일 이내에 마감되는 지원사업들만 필터링하여 반환합니다.
+   * 마감일 순으로 오름차순 정렬하여 가장 급한 것부터 표시됩니다.
+   *
+   * @returns 마감임박 지원사업 목록
+   */
+  async findUrgentPrograms(): Promise<ProgramListResponseDto> {
+    try {
+      const now = new Date();
+      const sevenDaysLater = new Date();
+      sevenDaysLater.setDate(now.getDate() + 7);
+
+      const where: Prisma.SupportProgramWhereInput = {
+        deadline: {
+          gte: now, // 현재 이후
+          lte: sevenDaysLater, // 7일 이내
+        },
+      };
+
+      // 총 개수 조회
+      const total = await this.prisma.supportProgram.count({ where });
+
+      // 데이터 조회 (마감일 순 오름차순)
+      const programs = await this.prisma.supportProgram.findMany({
+        where,
+        include: {
+          provider: true,
+        },
+        orderBy: {
+          deadline: "asc",
+        },
+      });
+
+      // DTO 변환
+      const programDtos: ProgramResponseDto[] = programs.map((program) => ({
+        id: program.id,
+        title: program.title,
+        description: program.description || "",
+        category: this.mapStringToEnum(program.category),
+        categoryLabel:
+          SUPPORT_PROGRAM_CATEGORY_LABELS[
+            this.mapStringToEnum(program.category)
+          ],
+        target: program.target || "전체",
+        amountMin: program.amountMin,
+        amountMax: program.amountMax,
+        supportRate: program.supportRate,
+        region: program.region,
+        deadline: program.deadline,
+        daysLeft: program.deadline
+          ? this.calculateDaysLeft(program.deadline)
+          : undefined,
+        applicationUrl: program.applicationUrl,
+        attachmentUrl: program.attachmentUrl,
+        tags: program.tags,
+        provider: {
+          id: program.provider.id,
+          name: program.provider.name,
+          type: program.provider.type,
+          contact: program.provider.contact,
+          website: program.provider.website,
+        },
+        createdAt: new Date(),
+      }));
+
+      return {
+        programs: programDtos,
+        total,
+        page: 1,
+        limit: total,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      };
+    } catch (error) {
+      this.logger.error("Error finding urgent programs:", error);
+      throw error;
+    }
+  }
+
+  /**
    * 지원사업 분야(카테고리) 목록과 각 분야별 통계를 조회하는 메서드
    *
    * 8개 지원사업 분야의 정보를 반환합니다:

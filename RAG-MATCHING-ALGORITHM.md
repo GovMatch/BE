@@ -186,6 +186,26 @@ const weights = {
 ### 처리량
 20개 → 10개 (최종 결과)
 
+### 3단계 폴백 시스템 (안정성 강화)
+
+#### 1단계: OpenAI Assistant 기반 분석
+```typescript
+// 우선순위 1: RAG 기반 검색 및 분석
+const assistantResults = await this.openAIService.searchAndAnalyzeWithAssistant(requestData);
+```
+
+#### 2단계: 배치 분석 폴백
+```typescript
+// Assistant 실패 시: 기존 배치 분석 방식
+const batchResults = await this.openAIService.analyzeBatchMatching(programs, requestData);
+```
+
+#### 3단계: 룰 기반 로직 폴백
+```typescript
+// 모든 AI 분석 실패 시: 룰 기반 안전장치
+return this.fallbackToRuleBasedLogic(programs, requestData);
+```
+
 ### LLM 분석 영역
 
 #### 1) 사업 목적 정합성 분석
@@ -225,16 +245,33 @@ const weights = {
 → 매칭 이유: "높은 지원율로 자부담 최소화 (90%)"
 ```
 
-#### 5) 매칭 이유 생성 로직
+#### 5) 고도화된 매칭 이유 생성 로직
 ```typescript
-// 우선순위별 이유 생성
-if (카테고리점수 >= 0.9) reasons.push("선택한 지원 분야와 정확히 일치")
-if (지역점수 >= 0.9) reasons.push("해당 지역 지원 프로그램")
-if (기업규모점수 >= 0.9) reasons.push("기업 규모에 적합한 프로그램")
-if (마감일점수 >= 0.9) reasons.push("지원 시급성에 맞는 마감일")
-if (금액점수 >= 0.8) reasons.push("적절한 지원금액 규모")
+// 사업 목적 정합성 분석
+const purposeAlignment = this.analyzePurposeAlignment(businessPurpose, description);
+if (purposeAlignment.score > 0.7) {
+  reasons.push(`사업 목적과 ${Math.round(purposeAlignment.score * 100)}% 일치`);
+}
 
-// 최대 5개까지 제한
+// 기업 성장 단계별 적합성 분석
+const growthStageMatch = this.analyzeGrowthStageMatch(program, requestData);
+if (growthStageMatch) {
+  reasons.push(growthStageMatch); // "초기 스타트업에 최적화된 프로그램"
+}
+
+// 자금 효율성 분석
+const efficiencyAnalysis = this.analyzeEfficiency(program, requestData);
+if (efficiencyAnalysis) {
+  reasons.push(efficiencyAnalysis); // "예상 자금 수요의 대부분을 충족 가능"
+}
+
+// 혁신성 키워드 보너스
+if (this.hasInnovationKeywords(description)) {
+  adjustedScore += 0.05;
+}
+
+// 중복 제거 및 최대 5개로 제한
+return [...new Set(enhancedReasons)].slice(0, 5);
 ```
 
 ---
@@ -341,15 +378,17 @@ if (금액점수 >= 0.8) reasons.push("적절한 지원금액 규모")
 
 ## 📋 향후 개선 계획
 
-### 1. 임베딩 고도화
-- OpenAI Embedding API 연동
-- 한국어 특화 임베딩 모델 적용
-- 실시간 벡터 유사도 계산
+### 1. 임베딩 고도화 (현재 키워드 기반)
+- **현재 상태**: 키워드 매칭 기반 임베딩 필터링
+- **계획**: OpenAI Embedding API 연동
+- **향후**: 한국어 특화 임베딩 모델 적용
+- **목표**: 실시간 벡터 유사도 계산
 
-### 2. LLM 분석 강화
-- GPT-4 API 연동으로 정교한 분석
-- 프롬프트 엔지니어링 최적화
-- 다양한 매칭 패턴 학습
+### 2. LLM 분석 강화 (3단계 폴백 시스템 구현됨)
+- **구현 완료**: 3단계 폴백 시스템 (Assistant → Batch → Rule-based)
+- **구현 완료**: 고도화된 매칭 이유 생성 (사업목적 정합성, 성장단계 분석, 효율성 분석)
+- **진행 중**: 프롬프트 엔지니어링 최적화
+- **계획**: 다양한 매칭 패턴 학습
 
 ### 3. 개인화 시스템
 - 사용자 피드백 학습
@@ -370,4 +409,4 @@ if (금액점수 >= 0.8) reasons.push("적절한 지원금액 규모")
 
 ---
 
-*마지막 업데이트: 2024년 12월*
+*마지막 업데이트: 2025년 9월 - 3단계 폴백 시스템 및 고도화된 매칭 로직 반영*

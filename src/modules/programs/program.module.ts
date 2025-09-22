@@ -11,9 +11,10 @@ import { OpenAIService } from './services/openai.service';
 import { ProgramFileService } from './services/program-file.service';
 import { ProgramSchedulerService } from './services/program-scheduler.service';
 import { PrismaModule } from '../../config/prisma.module';
+import { BizinfoModule } from '../bizinfo/bizinfo.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, BizinfoModule],
   controllers: [ProgramController, MatchingController, ProgramAdminController],
   providers: [
     ProgramService,
