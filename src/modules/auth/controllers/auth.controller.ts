@@ -31,7 +31,7 @@ export class AuthController {
 
   /**
    * 회원가입
-   * @param registerDto 회원가입 정보 (이메일, 비밀번호, 이름, 역할)
+   * @param registerDto 회원가입 정보 (이메일, 비밀번호, 이름, 연락처)
    * @returns 액세스 토큰 및 리프레시 토큰
    */
   @Public()

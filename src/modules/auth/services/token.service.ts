@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
-import { TokenDto } from '../dto';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { User } from "@prisma/client";
+import { TokenDto } from "../dto";
 
 export interface JwtPayload {
   sub: string;
@@ -14,7 +14,7 @@ export interface JwtPayload {
 export class TokenService {
   constructor(
     private jwtService: JwtService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {}
 
   async generateTokens(user: User): Promise<TokenDto> {
@@ -24,14 +24,17 @@ export class TokenService {
       role: user.role,
     };
 
+    const accessTokenExpiresIn = this.configService.get<string>("JWT_ACCESS_EXPIRES_IN") || "15m";
+    const refreshTokenExpiresIn = this.configService.get<string>("JWT_REFRESH_EXPIRES_IN") || "7d";
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'),
+        secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
+        expiresIn: accessTokenExpiresIn as any,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn: refreshTokenExpiresIn as any,
       }),
     ]);
 
@@ -43,13 +46,13 @@ export class TokenService {
 
   async verifyAccessToken(token: string): Promise<JwtPayload> {
     return this.jwtService.verifyAsync(token, {
-      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
     });
   }
 
   async verifyRefreshToken(token: string): Promise<JwtPayload> {
     return this.jwtService.verifyAsync(token, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
     });
   }
 }

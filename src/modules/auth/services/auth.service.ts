@@ -18,7 +18,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<TokenDto> {
-    const { email, password, name, role } = registerDto;
+    const { email, password, name, phone } = registerDto;
 
     // 이메일 중복 체크
     const existingUser = await this.prisma.user.findUnique({
@@ -38,7 +38,7 @@ export class AuthService {
         email,
         password: hashedPassword,
         name,
-        role: role || 'USER',
+        phone,
         provider: AuthProvider.LOCAL,
       },
     });

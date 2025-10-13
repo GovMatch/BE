@@ -20,6 +20,7 @@ import {
   CategoryResponseDto,
 } from "../dto";
 import { SupportProgramCategory } from "../../../shared/enums/support-program-category.enum";
+import { Public } from "../../auth/decorators";
 
 /**
  * 지원사업 관련 REST API 컨트롤러
@@ -50,6 +51,7 @@ export class ProgramController {
    * @param query - 조회 조건을 담은 쿼리 파라미터
    * @returns 지원사업 목록과 페이지네이션 정보
    */
+  @Public()
   @Get()
   @ApiOperation({
     summary: "지원사업 목록 조회",
@@ -122,6 +124,7 @@ export class ProgramController {
    *
    * @returns 분야 목록과 각 분야별 지원사업 개수
    */
+  @Public()
   @Get("categories")
   @ApiOperation({
     summary: "지원사업 분야 목록 조회",
@@ -146,6 +149,7 @@ export class ProgramController {
    * @param query - 검색 조건을 담은 쿼리 파라미터
    * @returns 검색된 지원사업 목록과 페이지네이션 정보
    */
+  @Public()
   @Get("search")
   @ApiOperation({
     summary: "지원사업 검색",
@@ -173,6 +177,7 @@ export class ProgramController {
    * @param query - 페이지네이션 조건을 담은 쿼리 파라미터
    * @returns 마감임박 지원사업 목록
    */
+  @Public()
   @Get("urgent")
   @ApiOperation({
     summary: "마감임박 지원사업 조회",
@@ -210,6 +215,7 @@ export class ProgramController {
    * @returns 지원사업 상세 정보
    * @throws NotFoundException - 해당 ID의 지원사업이 존재하지 않을 때
    */
+  @Public()
   @Get(":id")
   @ApiOperation({
     summary: "지원사업 상세 조회",
