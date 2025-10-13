@@ -168,7 +168,9 @@ export class ProgramController {
    *
    * 현재 날짜로부터 7일 이내에 마감되는 지원사업들만 필터링하여 반환합니다.
    * 기본적으로 마감일 순으로 오름차순 정렬됩니다.
+   * 페이지네이션을 지원합니다.
    *
+   * @param query - 페이지네이션 조건을 담은 쿼리 파라미터
    * @returns 마감임박 지원사업 목록
    */
   @Get("urgent")
@@ -181,8 +183,20 @@ export class ProgramController {
     description: "마감임박 지원사업 목록 조회 성공",
     type: ProgramListResponseDto,
   })
-  async getUrgentPrograms(): Promise<ProgramListResponseDto> {
-    return this.programService.findUrgentPrograms();
+  @ApiQuery({
+    name: "page",
+    required: false,
+    description: "페이지 번호 (기본값: 1)",
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    description: "페이지당 항목 수 (기본값: 20, 최대: 100)",
+  })
+  async getUrgentPrograms(
+    @Query() query: ProgramQueryDto
+  ): Promise<ProgramListResponseDto> {
+    return this.programService.findUrgentPrograms(query);
   }
 
   /**

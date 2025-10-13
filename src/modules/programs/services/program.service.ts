@@ -237,11 +237,16 @@ export class ProgramService {
    *
    * 현재 날짜로부터 7일 이내에 마감되는 지원사업들만 필터링하여 반환합니다.
    * 마감일 순으로 오름차순 정렬하여 가장 급한 것부터 표시됩니다.
+   * 페이지네이션을 지원합니다.
    *
+   * @param query - 페이지네이션 조건을 담은 쿼리 파라미터
    * @returns 마감임박 지원사업 목록
    */
-  async findUrgentPrograms(): Promise<ProgramListResponseDto> {
+  async findUrgentPrograms(query: ProgramQueryDto = {}): Promise<ProgramListResponseDto> {
     try {
+      const { page = 1, limit = 20 } = query;
+      const skip = (page - 1) * limit;
+
       const now = new Date();
       const sevenDaysLater = new Date();
       sevenDaysLater.setDate(now.getDate() + 7);
@@ -265,6 +270,8 @@ export class ProgramService {
         orderBy: {
           deadline: "asc",
         },
+        skip,
+        take: limit,
       });
 
       // DTO 변환
@@ -299,14 +306,16 @@ export class ProgramService {
         createdAt: new Date(),
       }));
 
+      const totalPages = Math.ceil(total / limit);
+
       return {
         programs: programDtos,
         total,
-        page: 1,
-        limit: total,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       };
     } catch (error) {
       this.logger.error("Error finding urgent programs:", error);
